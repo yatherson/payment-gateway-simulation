@@ -1,0 +1,37 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum CardBrand {
+  VISA
+  MASTERCARD
+  ELO
+  AMEX
+  HIPERCARD
+}
+
+enum CardStatus {
+  ACTIVE
+  BLOCKED
+  CANCELLED
+}
+
+model CreditCard {
+  id             String     @id @default(uuid())
+  maskedNumber   String     @db.VarChar(19)
+  cardholderName String     @db.VarChar(100)
+  brand          CardBrand
+  expirationDate DateTime   @db.Date
+  creditLimit    Decimal    @db.Decimal(15, 2)
+  availableLimit Decimal    @db.Decimal(15, 2)
+  status         CardStatus @default(ACTIVE)
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  @@map("credit_cards")
+}
