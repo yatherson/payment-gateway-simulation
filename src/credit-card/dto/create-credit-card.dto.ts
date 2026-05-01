@@ -1,4 +1,11 @@
-import { IsDateString, IsEnum, IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 import { CardBrand } from '@prisma/client';
 
 export class CreateCreditCardDto {
