@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { CardStatus, Prisma } from '@prisma/client';
 import { CreditCardRepository } from './credit-card.repository';
 import { CreditCardResponseDto } from './dto/credit-card-response.dto';
@@ -13,7 +17,9 @@ export class CreditCardService {
     const creditLimit = new Prisma.Decimal(dto.creditLimit);
 
     if (creditLimit.lte(0)) {
-      throw new UnprocessableEntityException('O limite de crédito deve ser maior que zero.');
+      throw new UnprocessableEntityException(
+        'O limite de crédito deve ser maior que zero.',
+      );
     }
 
     const card = await this.creditCardRepository.create({
@@ -37,11 +43,16 @@ export class CreditCardService {
     return new CreditCardResponseDto(card);
   }
 
-  async updateLimit(id: string, dto: UpdateCreditLimitDto): Promise<CreditCardResponseDto> {
+  async updateLimit(
+    id: string,
+    dto: UpdateCreditLimitDto,
+  ): Promise<CreditCardResponseDto> {
     const card = await this.creditCardRepository.findById(id);
 
     if (card.status !== CardStatus.ACTIVE) {
-      throw new ConflictException('Apenas cartões com status ATIVO podem ter o limite alterado.');
+      throw new ConflictException(
+        'Apenas cartões com status ATIVO podem ter o limite alterado.',
+      );
     }
 
     const newLimit = new Prisma.Decimal(dto.newLimit);

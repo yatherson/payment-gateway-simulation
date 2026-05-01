@@ -1,11 +1,18 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { CreditCardModule } from './credit-card/credit-card.module';
-import { PrismaModule } from './prisma/prisma.module';
+import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+import { AwsModule } from "./infrastructure/aws/aws.module";
+import { CreditCardModule } from "./credit-card/credit-card.module";
+import { PrismaModule } from "./prisma/prisma.module";
 
 @Module({
-  imports: [PrismaModule, CreditCardModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    PrismaModule,
+    AwsModule,
+    CreditCardModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
