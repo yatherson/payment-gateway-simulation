@@ -1,13 +1,12 @@
-import {
-  ConflictException,
-  Injectable,
-  UnprocessableEntityException,
-} from '@nestjs/common';
-import { CardStatus, Prisma } from '@prisma/client';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { CardStatus, CreditCard, Prisma } from '@prisma/client';
 import { CreditCardRepository } from './credit-card.repository';
 import { CreditCardResponseDto } from './dto/credit-card-response.dto';
 import { CreateCreditCardDto } from './dto/create-credit-card.dto';
 import { UpdateCreditLimitDto } from './dto/update-credit-limit.dto';
+import { CreditCardNotFoundException } from '../domain/exceptions/credit-card-not-found.exception';
+import { CreditLimitNotPositiveException } from '../domain/exceptions/credit-limit-not-positive.exception';
+import { NewLimitBelowUsedAmountException } from '../domain/exceptions/new-limit-below-used-amount.exception';
 
 @Injectable()
 export class CreditCardService {
@@ -17,9 +16,7 @@ export class CreditCardService {
     const creditLimit = new Prisma.Decimal(dto.creditLimit);
 
     if (creditLimit.lte(0)) {
-      throw new UnprocessableEntityException(
-        'O limite de crédito deve ser maior que zero.',
-      );
+      throw new CreditLimitNotPositiveException(creditLimit);
     }
 
     const card = await this.creditCardRepository.create({
@@ -39,20 +36,15 @@ export class CreditCardService {
   }
 
   async findById(id: string): Promise<CreditCardResponseDto> {
-    const card = await this.creditCardRepository.findById(id);
+    const card = await this.findCardOrThrow(id);
     return new CreditCardResponseDto(card);
   }
 
-  async updateLimit(
-    id: string,
-    dto: UpdateCreditLimitDto,
-  ): Promise<CreditCardResponseDto> {
-    const card = await this.creditCardRepository.findById(id);
+  async updateLimit(id: string, dto: UpdateCreditLimitDto): Promise<CreditCardResponseDto> {
+    const card = await this.findCardOrThrow(id);
 
     if (card.status !== CardStatus.ACTIVE) {
-      throw new ConflictException(
-        'Apenas cartões com status ATIVO podem ter o limite alterado.',
-      );
+      throw new ConflictException('Apenas cartões com status ATIVO podem ter o limite alterado.');
     }
 
     const newLimit = new Prisma.Decimal(dto.newLimit);
@@ -60,9 +52,8 @@ export class CreditCardService {
     const newAvailableLimit = card.availableLimit.plus(delta);
 
     if (newAvailableLimit.lt(0)) {
-      throw new UnprocessableEntityException(
-        'O novo limite não pode ser inferior ao valor já utilizado pelo titular.',
-      );
+      const usedAmount = card.creditLimit.minus(card.availableLimit);
+      throw new NewLimitBelowUsedAmountException(newLimit, usedAmount);
     }
 
     const updatedCard = await this.creditCardRepository.updateLimit(id, {
@@ -74,7 +65,7 @@ export class CreditCardService {
   }
 
   async block(id: string): Promise<CreditCardResponseDto> {
-    const card = await this.creditCardRepository.findById(id);
+    const card = await this.findCardOrThrow(id);
 
     if (card.status === CardStatus.CANCELLED) {
       throw new ConflictException('Cartão cancelado não pode ser bloqueado.');
@@ -89,7 +80,7 @@ export class CreditCardService {
   }
 
   async cancel(id: string): Promise<CreditCardResponseDto> {
-    const card = await this.creditCardRepository.findById(id);
+    const card = await this.findCardOrThrow(id);
 
     if (card.status === CardStatus.CANCELLED) {
       throw new ConflictException('Cartão já se encontra cancelado.');
@@ -97,6 +88,16 @@ export class CreditCardService {
 
     const updatedCard = await this.creditCardRepository.updateStatus(id, CardStatus.CANCELLED);
     return new CreditCardResponseDto(updatedCard);
+  }
+
+  private async findCardOrThrow(id: string): Promise<CreditCard> {
+    const card = await this.creditCardRepository.findById(id);
+
+    if (!card) {
+      throw new CreditCardNotFoundException(id);
+    }
+
+    return card;
   }
 
   private maskCardNumber(last4Digits: string): string {

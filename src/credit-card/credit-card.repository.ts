@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CardBrand, CardStatus, CreditCard, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -34,16 +34,8 @@ export class CreditCardRepository {
     });
   }
 
-  async findById(id: string): Promise<CreditCard> {
-    const card = await this.prisma.creditCard.findUnique({ where: { id } });
-
-    if (!card) {
-      throw new NotFoundException(
-        `Cartão de crédito com id '${id}' não encontrado.`,
-      );
-    }
-
-    return card;
+  async findById(id: string): Promise<CreditCard | null> {
+    return this.prisma.creditCard.findUnique({ where: { id } });
   }
 
   async updateStatus(id: string, status: CardStatus): Promise<CreditCard> {
