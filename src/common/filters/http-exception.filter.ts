@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { DomainException } from '../../domain/exceptions/domain.exception';
 
 interface ProblemDetail {
   type: string;
@@ -40,8 +41,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     const body: ProblemDetail = {
-      type: `https://httpstatuses.com/${status}`,
-      title: this.resolveTitle(status),
+      type:
+        exception instanceof DomainException
+          ? exception.errorType
+          : `https://httpstatuses.com/${status}`,
+      title:
+        exception instanceof DomainException
+          ? exception.problemTitle
+          : this.resolveTitle(status),
       status,
       detail,
       instance: request.url,

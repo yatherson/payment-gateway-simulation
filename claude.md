@@ -28,7 +28,21 @@ Ao gerar ou modificar qualquer código, você DEVE aplicar as seguintes regras. 
 - **Tratamento de Exceções:** Nunca vaze *stack traces* ou erros brutos do banco/AWS. Capture erros de infraestrutura (`try/catch`) e lance exceções HTTP/gRPC limpas de domínio.
 - **Paridade de Infraestrutura:** O código deve estar pronto para o Floci.io e para a AWS. Nunca "chumbe" (*hardcode*) URLs ou chaves de acesso.
 
-## 💊 OBRIGAÇÃO DE RESPOSTA FORMATADA
+## Padronização de Erros e Exceções
+
+- **Proibido**: Uso de `try/catch` genérico em Services para retornar objetos de erro ou múltiplos `if (!result) throw...`.
+- **Obrigatório**: Uso de um `GlobalHttpExceptionFilter`.
+- **Camada de Negócio**: Lance exceções específicas do NestJS (`NotFoundException`, `BadRequestException`, `UnauthorizedException`) ou exceções de domínio personalizadas.
+- **Formato**: Todas as respostas de erro devem seguir o `Content-Type: application/problem+json`.
+- **Campos Obrigatórios**:
+   - `type`: URI que identifica o tipo do problema (ex: `/errors/insufficient-funds`).
+   - `title`: Descrição curta e fixa do erro em português.
+   - `status`: O status code HTTP.
+   - `detail`: Explicação detalhada da ocorrência específica.
+   - `instance`: URI da ocorrência específica (opcional, mas recomendado).
+- **Extensões**: Use o campo `errors` (array) para validações de campo (Zod/class-validator).
+
+## OBRIGAÇÃO DE RESPOSTA FORMATADA
 
 Ao final de **TODA** resposta que contenha geração, refatoração ou explicação de código, você é OBRIGADO a incluir uma seção isolada chamada exatemente de:
 
