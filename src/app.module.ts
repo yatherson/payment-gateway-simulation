@@ -5,6 +5,7 @@ import { AppService } from "./app.service";
 import { AwsModule } from "./infrastructure/aws/aws.module";
 import { CreditCardModule } from "./credit-card/credit-card.module";
 import { PrismaModule } from "./prisma/prisma.module";
+import { PaymentsModule } from "./payments/payments.module";
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { PrismaModule } from "./prisma/prisma.module";
     PrismaModule,
     AwsModule,
     CreditCardModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
